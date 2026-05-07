@@ -1,73 +1,74 @@
-# React + TypeScript + Vite
+# EVA Admin — Веб-панель управления
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React SPA для ролей **admin** и **doctor** платформы ЕВА.
 
-Currently, two official plugins are available:
+## Стек
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Vite 5 + React 18 + TypeScript
+- Tailwind CSS + shadcn/ui
+- TanStack Query v5 (server state)
+- Zustand (auth store)
+- React Router v6
+- Axios (с interceptor авто-обновления токена)
 
-## React Compiler
+## Запуск
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # сборка в dist/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Бэкенд должен работать на `http://localhost:8081`.  
+Base URL задаётся через `VITE_API_URL` в `.env` (по умолчанию `http://localhost:8081/api/v1`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Роли и доступ
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Роль | Доступные страницы |
+|------|--------------------|
+| `admin` | Stats, Users, Doctors, Clinics, Appointments, Reviews, Schedule (любого врача) |
+| `doctor` | Appointments (свои), Schedule (своё) |
+
+После логина редирект: `admin` → `/admin/stats`, `doctor` → `/doctor/appointments`.  
+Попытка зайти на страницу чужой роли → 403 / редирект на логин.
+
+## Структура проекта
+
 ```
+src/
+  api/              ← axios instance + функции запросов к API
+  auth/             ← Zustand store (token, role, userId), ProtectedRoute
+  components/
+    layout/         ← AppLayout, Sidebar (роль-зависимый)
+    ui/             ← shadcn-компоненты (Button, Card, Badge, Input…)
+  pages/
+    login/          ← LoginPage
+    admin/          ← StatsPage, UsersPage, DoctorsPage, ClinicsPage,
+                       AppointmentsPage, ReviewsPage, SchedulePage
+    doctor/         ← AppointmentsPage, SchedulePage
+  router.tsx        ← React Router + role guards
+  main.tsx          ← точка входа
+```
+
+## Страницы Admin
+
+| Маршрут | Описание |
+|---------|----------|
+| `/admin/stats` | Дашборд: счётчики пользователей, врачей, записей; топ специализаций |
+| `/admin/users` | Список пользователей, смена роли |
+| `/admin/doctors` | CRUD врачей, создание doctor-аккаунта |
+| `/admin/clinics` | CRUD клиник |
+| `/admin/appointments` | Все записи с фильтрами, смена статуса |
+| `/admin/reviews` | Модерация отзывов (скрыть / удалить) |
+| `/admin/schedule` | Расписание любого врача (добавить / удалить слоты) |
+
+## Страницы Doctor
+
+| Маршрут | Описание |
+|---------|----------|
+| `/doctor/appointments` | Записи врача, смена статуса, написание заключения |
+| `/doctor/schedule` | Своё расписание (добавить / удалить слоты) |
+
+## Авторизация
+
+Token refresh реализован через axios interceptor: при 401 автоматически вызывается `POST /auth/refresh`, после чего исходный запрос повторяется. При неудаче — разлогин.
