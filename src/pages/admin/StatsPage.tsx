@@ -42,7 +42,7 @@ export function StatsPage() {
   const { data, isLoading }             = useQuery({ queryKey: ['admin-stats'],    queryFn: getStats })
   const { data: chartData,  isLoading: chartLoading }    = useQuery({ queryKey: ['admin-chart', days], queryFn: () => getAppointmentsChart(days) })
   const { data: statuses,   isLoading: statusLoading }   = useQuery({ queryKey: ['admin-statuses'],    queryFn: getAppointmentStatuses })
-  const { data: doctorLoad, isLoading: doctorLoading }   = useQuery({ queryKey: ['admin-doctor-load'], queryFn: getDoctorLoad })
+  const { data: doctorLoad, isLoading: doctorLoading }   = useQuery({ queryKey: ['admin-doctor-load'], queryFn: () => getDoctorLoad() })
   const { data: aiStats,    isLoading: aiLoading }       = useQuery({ queryKey: ['admin-ai-stats'],    queryFn: getAiStats })
 
   if (isLoading) return <div className="text-gray-500">Загрузка...</div>
@@ -98,7 +98,7 @@ export function StatsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                <Tooltip formatter={(v: number) => [v, 'Записей']} labelFormatter={l => `Дата: ${l}`} />
+                <Tooltip formatter={(v) => [v as number, 'Записей']} labelFormatter={l => `Дата: ${l}`} />
                 <Bar dataKey="count" fill="#6366f1" radius={[3, 3, 0, 0]} name="Записей" />
               </BarChart>
             </ResponsiveContainer>
@@ -127,7 +127,7 @@ export function StatsPage() {
                     innerRadius={55}
                     outerRadius={85}
                     paddingAngle={3}
-                    label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                    label={({ percent }) => percent != null ? `${(percent * 100).toFixed(0)}%` : ''}
                     labelLine={false}
                   >
                     {pieData.map((entry, i) => (
@@ -135,7 +135,7 @@ export function StatsPage() {
                     ))}
                   </Pie>
                   <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} />
-                  <Tooltip formatter={(v: number, name: string) => [v, name]} />
+                  <Tooltip formatter={(v, name) => [v as number, name]} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -195,9 +195,11 @@ export function StatsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain size={18} className="text-indigo-500" />
-              ИИ-анализ симптомов
+            <CardTitle>
+              <span className="flex items-center gap-2">
+                <Brain size={18} className="text-indigo-500" />
+                ИИ-анализ симптомов
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -227,14 +229,14 @@ export function StatsPage() {
                           cx="50%"
                           cy="50%"
                           outerRadius={60}
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ name, percent }) => percent != null ? `${name} ${(percent * 100).toFixed(0)}%` : ''}
                           labelLine={false}
                         >
                           {urgencyData.map((entry, i) => (
                             <Cell key={i} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(v: number, name: string) => [v, name]} />
+                        <Tooltip formatter={(v, name) => [v as number, name]} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>

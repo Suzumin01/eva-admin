@@ -25,11 +25,24 @@ export const getAiStats = () =>
 export const getUsers = (params?: { search?: string; role?: string; limit?: number; offset?: number }) =>
   api.get('/admin/users', { params }).then(r => r.data)
 
+export const updateUser = (userId: string, data: {
+  fullName?: string; email?: string; phone?: string
+  dateOfBirth?: string; allergies?: string; chronicDiseases?: string
+}) => api.patch(`/admin/users/${userId}`, data).then(r => r.data)
+
 export const updateUserRole = (userId: string, role: string) =>
   api.patch(`/admin/users/${userId}/role`, { role }).then(r => r.data)
 
 export const setUserActive = (userId: string, active: boolean) =>
   api.patch(`/admin/users/${userId}/active`, { active }).then(r => r.data)
+
+export const adminUploadUserPhoto = (userId: string, file: File) => {
+  const fd = new FormData(); fd.append('photo', file)
+  return api.post(`/admin/users/${userId}/photo`, fd).then(r => r.data)
+}
+
+export const adminDeleteUserPhoto = (userId: string) =>
+  api.delete(`/admin/users/${userId}/photo`).then(r => r.data)
 
 export const getDoctors = (params?: { specializationId?: number; clinicId?: number; search?: string; limit?: number; offset?: number }) =>
   api.get('/doctors', { params }).then(r => r.data)
@@ -47,6 +60,14 @@ export const updateDoctor = (doctorId: number, data: {
 export const deactivateDoctor = (doctorId: number) =>
   api.delete(`/admin/doctors/${doctorId}`).then(r => r.data)
 
+export const adminUploadDoctorPhoto = (doctorId: number, file: File) => {
+  const fd = new FormData(); fd.append('photo', file)
+  return api.post(`/admin/doctors/${doctorId}/photo`, fd).then(r => r.data)
+}
+
+export const adminDeleteDoctorPhoto = (doctorId: number) =>
+  api.delete(`/admin/doctors/${doctorId}/photo`).then(r => r.data)
+
 export const createDoctorAccount = (doctorId: number, data: { email: string; password: string; fullName?: string }) =>
   api.post(`/admin/doctors/${doctorId}/account`, data).then(r => r.data)
 
@@ -61,6 +82,14 @@ export const updateClinic = (clinicId: number, data: { clinicName?: string; addr
 
 export const deactivateClinic = (clinicId: number) =>
   api.delete(`/admin/clinics/${clinicId}`).then(r => r.data)
+
+export const adminUploadClinicLogo = (clinicId: number, file: File) => {
+  const fd = new FormData(); fd.append('logo', file)
+  return api.post(`/clinics/${clinicId}/logo`, fd).then(r => r.data)
+}
+
+export const adminDeleteClinicLogo = (clinicId: number) =>
+  api.delete(`/admin/clinics/${clinicId}/logo`).then(r => r.data)
 
 export const getAdminAppointments = (params?: {
   status?: string; doctorId?: number; dateFrom?: string; dateTo?: string;
@@ -95,6 +124,12 @@ export const deleteSchedule = (scheduleId: number) =>
 export const getDoctorAppointments = (params?: { status?: string; dateFrom?: string; dateTo?: string }) =>
   api.get('/doctor/appointments', { params }).then(r => r.data)
 
+export const getDoctorAppointmentDocuments = (appointmentId: string) =>
+  api.get(`/doctor/appointments/${appointmentId}/documents`).then(r => r.data)
+
+export const getAdminUserDocuments = (userId: string) =>
+  api.get(`/admin/users/${userId}/documents`).then(r => r.data)
+
 export const updateDoctorAppointmentStatus = (id: string, status: string) =>
   api.patch(`/doctor/appointments/${id}/status`, { status }).then(r => r.data)
 
@@ -124,3 +159,15 @@ export const deleteSpecialization = (id: number) =>
 
 export const getSpecializations = () =>
   api.get('/specializations').then(r => r.data)
+
+export const downloadBlob = async (apiPath: string, fileName: string) => {
+  const res = await api.get(apiPath, { responseType: 'blob' })
+  const url = URL.createObjectURL(new Blob([res.data]))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
