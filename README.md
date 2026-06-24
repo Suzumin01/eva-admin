@@ -20,7 +20,7 @@
 
 ## Быстрый старт
 
-**Требование:** запущенный [eva-backend](../eva-backend) на порту 8081.
+**Требование:** запущенный [eva-server](https://github.com/Suzumin01/eva-server) на порту 8081.
 
 ```bash
 npm install
